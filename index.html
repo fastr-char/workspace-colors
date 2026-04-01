@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fastr Workspace — Color Scheme Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ================================================================
+   CSS VARIABLES — Color scheme engine
+   ================================================================ */
+:root {
+  --c-brand: #7B61FF;
+  --c-brand-hover: #6B4FE0;
+  --c-brand-muted: rgba(123,97,255,0.08);
+  --c-brand-border: rgba(123,97,255,0.3);
+
+  --chrome-bg: #F7F7F8;
+  --chrome-surface: #FFFFFF;
+  --chrome-surface-alt: #FAFAFA;
+  --chrome-border: #E4E4E8;
+  --chrome-border-light: #EEEFF1;
+  --chrome-text: #1B1B1F;
+  --chrome-text-secondary: #65666B;
+  --chrome-text-dim: #A0A1A7;
+  --chrome-hover: #F0F0F3;
+  --chrome-icon: #6E6F74;
+  --chrome-ruler-bg: #F5F5F6;
+  --chrome-ruler-line: #DDDDE1;
+  --chrome-ruler-text: #A0A1A5;
+  --chrome-selection: var(--c-brand);
+  --chrome-selection-bg: var(--c-brand-muted);
+
+  --canvas-bg: #E5E5E9;
+
+  --el-grey: #B1B2B5;
+  --el-text: #000000;
+  --el-board-fill: #FFFFFF;
+}
+
+body.dark {
+  --chrome-bg: #18191C;
+  --chrome-surface: #212225;
+  --chrome-surface-alt: #1C1D20;
+  --chrome-border: #35363B;
+  --chrome-border-light: #2C2D31;
+  --chrome-text: #E3E3E7;
+  --chrome-text-secondary: #9B9CA2;
+  --chrome-text-dim: #5C5D63;
+  --chrome-hover: #2A2B2F;
+  --chrome-icon: #8E8F96;
+  --chrome-ruler-bg: #1C1D20;
+  --chrome-ruler-line: #2E2F33;
+  --chrome-ruler-text: #555659;
+  --chrome-selection-bg: rgba(123,97,255,0.15);
+  --canvas-bg: #131416;
+  --el-board-fill: #2A2B30;
+  --el-text: #E3E3E7;
+  --el-grey: #6B6D75;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--canvas-bg);
+  color: var(--chrome-text);
+  overflow: hidden;
+  height: 100vh;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+button { font-family: inherit; }
+select { font-family: inherit; }
+input { font-family: inherit; }
+
+/* ================================================================
+   TOP BAR
+   ================================================================ */
+.topbar {
+  height: 44px;
+  background: var(--chrome-surface);
+  border-bottom: 1px solid var(--chrome-border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  position: relative;
+  z-index: 50;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 240px;
+}
+.tb-hamburger {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--chrome-icon);
+}
+.tb-hamburger svg { width: 18px; height: 18px; }
+.tb-breadcrumb {
+  font-size: 10px; font-weight: 600;
+  color: var(--chrome-text-dim);
+  letter-spacing: 0.02em;
+  display: flex; align-items: center; gap: 4px;
+}
+.tb-breadcrumb .bc-brand { color: var(--c-brand); font-weight: 700; }
+.tb-title {
+  font-size: 13px; font-weight: 600;
+  color: var(--chrome-text);
+  margin-left: 4px;
+}
+.tb-dots {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--chrome-text-dim); font-size: 14px;
+  margin-left: 4px;
+}
+
+.toolbar {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--chrome-surface);
+  border: 1px solid var(--chrome-border);
+  border-radius: 10px;
+  padding: 4px 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.tb-tool {
+  width: 32px; height: 30px;
+  border: none; background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--chrome-icon);
+  transition: background 0.1s, color 0.1s;
+}
+.tb-tool:hover { background: var(--chrome-hover); color: var(--chrome-text); }
+.tb-tool.active { background: var(--c-brand); color: #fff; }
+.tb-tool svg { width: 18px; height: 18px; }
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tb-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #1A6B5A;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+}
+.tb-zoom { font-size: 11px; color: var(--chrome-text-secondary); font-weight: 500; }
+.tb-icon-btn {
+  width: 24px; height: 24px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--chrome-text-dim);
+}
+.tb-icon-btn svg { width: 16px; height: 16px; }
+.tb-icon-btn.green { color: #2DA44E; }
+
+/* ================================================================
+   MAIN 3-COL LAYOUT
+   ================================================================ */
+.main-layout {
+  display: grid;
+  grid-template-columns: 252px 1fr 280px;
+  height: calc(100vh - 44px);
+}
+
+/* ================================================================
+   LEFT PANEL
+   ================================================================ */
+.left-panel {
+  background: var(--chrome-surface);
+  border-right: 1px solid var(--chrome-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.lp-tabs {
+  display: flex;
+  height: 38px;
+  border-bottom: 1px solid var(--chrome-border);
+  align-items: center;
+  flex-shrink: 0;
+}
+.lp-back {
+  width: 32px; height: 38px;
+  border: none; background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--chrome-icon);
+  border-right: 1px solid var(--chrome-border);
+}
+.lp-back svg { width: 14px; height: 14px; }
+.lp-tab {
+  flex: 1; height: 38px;
+  border: none; background: transparent;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--chrome-text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s;
+}
+.lp-tab.active {
+  color: var(--c-brand);
+  border-bottom-color: var(--c-brand);
+}
+
+.lp-section-header {
+  padding: 10px 12px 4px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.lp-section-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text-dim);
+}
+.lp-add-btn {
+  width: 18px; height: 18px;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--chrome-text-dim); font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.variant-row {
+  padding: 4px 12px 8px;
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.variant-chip {
+  font-size: 11px; font-weight: 600;
+  color: var(--c-brand);
+  background: var(--chrome-selection-bg);
+  padding: 2px 8px; border-radius: 4px;
+}
+.variant-meta { font-size: 10px; color: var(--c-brand); opacity: 0.7; }
+.variant-devices {
+  margin-left: auto;
+  display: flex; gap: 3px;
+}
+.variant-devices span {
+  width: 14px; height: 12px;
+  border: 1.2px solid var(--chrome-border);
+  border-radius: 2px;
+  display: block;
+}
+
+.lp-variant-label {
+  padding: 6px 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--chrome-border);
+  flex-shrink: 0;
+}
+.lp-variant-label span {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text-dim);
+}
+.lp-search {
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--chrome-text-dim);
+}
+.lp-search svg { width: 13px; height: 13px; }
+
+.layer-tree {
+  flex: 1; overflow-y: auto;
+  padding: 4px 0;
+}
+.layer-item {
+  display: flex; align-items: center;
+  height: 28px;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: background 0.08s;
+  user-select: none;
+}
+.layer-item:hover { background: var(--chrome-hover); }
+.layer-item.selected {
+  background: var(--chrome-selection-bg);
+}
+.layer-item.selected .layer-name { color: var(--c-brand); }
+.l-indent { flex-shrink: 0; }
+.l-toggle {
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 7px;
+  color: var(--chrome-text-dim);
+  cursor: pointer;
+}
+.l-icon {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-right: 5px;
+  color: var(--chrome-icon);
+}
+.l-icon svg { width: 13px; height: 13px; }
+.layer-name {
+  font-size: 12px; font-weight: 500;
+  color: var(--chrome-text);
+  white-space: nowrap;
+}
+
+.lp-bottom {
+  border-top: 1px solid var(--chrome-border);
+  flex-shrink: 0;
+}
+.lp-bottom-row {
+  display: flex; align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px; color: var(--chrome-text-secondary);
+}
+.lp-bottom-row .lp-b-icons {
+  margin-left: auto;
+  display: flex; align-items: center; gap: 6px;
+  color: var(--chrome-text-dim);
+}
+.lp-b-icon {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+}
+.lp-b-icon svg { width: 13px; height: 13px; }
+
+/* ================================================================
+   CENTER -- Canvas
+   ================================================================ */
+.center-area {
+  position: relative;
+  overflow: hidden;
+  background: var(--canvas-bg);
+}
+
+.ruler-corner {
+  position: absolute; top: 0; left: 0;
+  width: 22px; height: 22px;
+  background: var(--chrome-ruler-bg);
+  border-right: 1px solid var(--chrome-ruler-line);
+  border-bottom: 1px solid var(--chrome-ruler-line);
+  z-index: 10;
+}
+.ruler-h {
+  position: absolute; top: 0; left: 22px; right: 0;
+  height: 22px;
+  background: var(--chrome-ruler-bg);
+  border-bottom: 1px solid var(--chrome-ruler-line);
+  z-index: 5;
+  overflow: hidden;
+}
+.ruler-v {
+  position: absolute; top: 22px; left: 0;
+  width: 22px; bottom: 0;
+  background: var(--chrome-ruler-bg);
+  border-right: 1px solid var(--chrome-ruler-line);
+  z-index: 5;
+  overflow: hidden;
+}
+.ruler-tick {
+  position: absolute;
+  font-size: 8px;
+  color: var(--chrome-ruler-text);
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+}
+.ruler-h .ruler-tick { bottom: 3px; }
+.ruler-v .ruler-tick {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+  right: 3px;
+}
+
+.canvas-vp {
+  position: absolute;
+  top: 22px; left: 22px; right: 0; bottom: 0;
+  overflow: hidden;
+}
+
+.board-label {
+  position: absolute;
+  font-size: 11px; font-weight: 500;
+  color: var(--chrome-text-secondary);
+}
+
+.board-frame {
+  position: absolute;
+  background: var(--el-board-fill);
+  transition: background 0.2s;
+}
+
+.board-selection {
+  position: absolute;
+  border: 1.5px dashed var(--c-brand);
+  pointer-events: none;
+}
+.sel-handle {
+  position: absolute;
+  width: 8px; height: 8px;
+  background: #fff;
+  border: 1.5px solid var(--c-brand);
+  border-radius: 50%;
+}
+.sel-handle.tl { top: -4px; left: -4px; }
+.sel-handle.tr { top: -4px; right: -4px; }
+.sel-handle.bl { bottom: -4px; left: -4px; }
+.sel-handle.br { bottom: -4px; right: -4px; }
+.sel-handle.tc { top: -4px; left: 50%; margin-left: -4px; }
+.sel-handle.bc { bottom: -4px; left: 50%; margin-left: -4px; }
+.sel-handle.ml { top: 50%; margin-top: -4px; left: -4px; }
+.sel-handle.mr { top: 50%; margin-top: -4px; right: -4px; }
+
+.c-ellipse {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--el-grey);
+  transition: background 0.2s;
+}
+.c-rect {
+  position: absolute;
+  background: var(--el-grey);
+  transition: background 0.2s;
+}
+.c-text {
+  position: absolute;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-weight: 400;
+  color: var(--el-text);
+  transition: color 0.2s;
+}
+
+.bottom-tray {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--chrome-surface);
+  border: 1px solid var(--chrome-border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  display: flex; gap: 10px;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.bottom-tray span {
+  font-size: 17px;
+  color: var(--chrome-icon);
+  cursor: pointer;
+}
+
+/* ================================================================
+   RIGHT PANEL -- Text element properties
+   ================================================================ */
+.right-panel {
+  background: var(--chrome-surface);
+  border-left: 1px solid var(--chrome-border);
+  display: flex; flex-direction: column;
+  overflow-y: auto;
+}
+
+.rp-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--chrome-border);
+  flex-shrink: 0;
+}
+.rp-tab {
+  height: 36px;
+  border: none; background: transparent;
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--chrome-text-dim);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+.rp-tab.active {
+  color: var(--c-brand);
+  border-bottom-color: var(--c-brand);
+}
+
+.rp-section {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--chrome-border);
+}
+.rp-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 6px;
+}
+.rp-row:last-child { margin-bottom: 0; }
+
+.rp-select {
+  padding: 4px 8px; height: 28px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 5px;
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  font-size: 11px;
+  flex: 1;
+  min-width: 0;
+}
+.rp-val {
+  font-size: 11px; color: var(--chrome-text-secondary);
+  display: flex; align-items: center; gap: 3px;
+  white-space: nowrap;
+}
+.rp-small-icon {
+  color: var(--chrome-text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex; align-items: center;
+}
+.rp-small-icon.active { color: var(--c-brand); }
+
+.rp-section-title {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text-dim);
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.rp-section-title button {
+  border: none; background: transparent;
+  color: var(--chrome-text-dim); cursor: pointer;
+  font-size: 14px;
+}
+.rp-collapse-icon {
+  font-size: 8px;
+  color: var(--chrome-text-dim);
+  margin-right: 4px;
+  cursor: pointer;
+}
+
+/* Text property inputs */
+.rp-text-input {
+  padding: 4px 6px; height: 28px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 5px;
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  font-size: 11px;
+  outline: none;
+  min-width: 0;
+}
+.rp-text-input:focus { border-color: var(--c-brand); }
+
+/* Icon button row */
+.rp-icon-row {
+  display: flex; align-items: center; gap: 2px;
+  flex-wrap: wrap;
+}
+.rp-icon-btn {
+  width: 24px; height: 24px;
+  border: none; background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--chrome-icon);
+  font-size: 11px;
+  transition: background 0.1s, color 0.1s;
+}
+.rp-icon-btn:hover { background: var(--chrome-hover); }
+.rp-icon-btn.active { background: var(--c-brand); color: #fff; }
+.rp-icon-btn svg { width: 14px; height: 14px; }
+.rp-icon-btn.sm { width: 22px; height: 22px; font-size: 10px; }
+.rp-icon-btn.sm svg { width: 12px; height: 12px; }
+
+.rp-separator {
+  width: 1px; height: 18px;
+  background: var(--chrome-border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* Fill row */
+.rp-fill-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.rp-fill-swatch {
+  width: 22px; height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--chrome-border);
+  flex-shrink: 0;
+}
+.rp-fill-hex {
+  font-size: 12px; font-weight: 500;
+  color: var(--chrome-text);
+  font-family: 'Inter', sans-serif;
+}
+.rp-fill-opacity {
+  font-size: 11px; color: var(--chrome-text-secondary);
+  margin-left: auto;
+  display: flex; align-items: center; gap: 3px;
+}
+
+/* Hyperlink row */
+.rp-link-row {
+  display: flex; align-items: center; gap: 4px;
+}
+.rp-link-input {
+  flex: 1;
+  padding: 4px 6px; height: 26px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 5px;
+  background: var(--chrome-surface);
+  color: var(--chrome-text-dim);
+  font-size: 10px;
+  outline: none;
+  min-width: 0;
+}
+.rp-link-select {
+  padding: 2px 4px; height: 26px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 5px;
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  font-size: 10px;
+  min-width: 70px;
+}
+
+/* ================================================================
+   FLOATING DRAGGABLE COLOR SCHEME PANEL
+   ================================================================ */
+.cs-toggle {
+  position: fixed;
+  bottom: 18px; right: 18px;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--c-brand);
+  color: #fff;
+  border: none; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+  z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s;
+  font-size: 18px;
+}
+.cs-toggle:hover { transform: scale(1.08); }
+
+.cs-panel {
+  position: fixed;
+  width: 340px;
+  max-height: 80vh;
+  background: var(--chrome-surface);
+  border: 1px solid var(--chrome-border);
+  border-radius: 12px;
+  z-index: 250;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+}
+.cs-panel.open {
+  display: flex;
+}
+
+.cs-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--chrome-border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  cursor: grab;
+  border-radius: 12px 12px 0 0;
+  user-select: none;
+}
+.cs-header:active { cursor: grabbing; }
+.cs-header h2 { font-size: 13px; font-weight: 700; pointer-events: none; }
+.cs-close {
+  width: 24px; height: 24px;
+  border: none; background: transparent;
+  color: var(--chrome-text-secondary);
+  cursor: pointer; font-size: 16px;
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cs-close:hover { background: var(--chrome-hover); }
+
+.cs-body {
+  flex: 1; overflow-y: auto;
+  padding: 12px 14px;
+}
+
+/* Mode toggle */
+.cs-mode-toggle {
+  display: flex;
+  background: var(--chrome-surface-alt);
+  border: 1px solid var(--chrome-border);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: 10px;
+}
+.cs-mode-btn {
+  flex: 1; padding: 5px;
+  border: none; background: transparent;
+  border-radius: 6px;
+  font-size: 11px; font-weight: 600;
+  cursor: pointer;
+  color: var(--chrome-text-secondary);
+  transition: all 0.15s;
+}
+.cs-mode-btn.active {
+  background: var(--c-brand);
+  color: #fff;
+}
+
+/* Mode status badges */
+.cs-mode-status {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.cs-mode-badge {
+  flex: 1;
+  padding: 5px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--chrome-border);
+  font-size: 9px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--chrome-text-secondary);
+}
+.cs-mode-badge.has-colors {
+  border-color: #2DA44E;
+  color: #2DA44E;
+  background: rgba(45,164,78,0.06);
+}
+.cs-mode-badge.active-mode {
+  outline: 2px solid var(--c-brand);
+  outline-offset: 1px;
+}
+
+/* Section label */
+.cs-label {
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--chrome-text-dim);
+  margin-bottom: 6px;
+  margin-top: 4px;
+}
+
+/* Set mode / reset buttons */
+.cs-action-row {
+  display: flex; gap: 4px; margin-bottom: 8px;
+}
+.cs-set-mode-btn {
+  flex: 1;
+  padding: 6px;
+  border: 2px dashed var(--chrome-border);
+  background: var(--chrome-surface-alt);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--chrome-text-secondary);
+  transition: all 0.15s;
+}
+.cs-set-mode-btn:hover {
+  border-color: var(--c-brand);
+  color: var(--c-brand);
+  background: var(--chrome-selection-bg);
+}
+.cs-set-mode-btn.saved {
+  border-style: solid;
+  border-color: #2DA44E;
+  color: #2DA44E;
+  background: rgba(45,164,78,0.06);
+}
+.cs-reset-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--chrome-text-secondary);
+  transition: all 0.15s;
+}
+.cs-reset-btn:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+
+/* Wheel */
+.cs-wheel-wrap {
+  position: relative;
+  width: 150px; height: 150px;
+  margin: 0 auto 10px;
+}
+#colorWheel { width: 150px; height: 150px; border-radius: 50%; cursor: crosshair; }
+.cs-wheel-dot {
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 2.5px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.25);
+  pointer-events: none;
+  transform: translate(-50%,-50%);
+}
+
+/* Sliders */
+.cs-slider-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 4px;
+}
+.cs-slider-row label {
+  font-size: 9px; color: var(--chrome-text-secondary);
+  width: 50px; flex-shrink: 0;
+}
+.cs-slider-row input[type="range"] {
+  flex: 1; height: 4px;
+  -webkit-appearance: none;
+  background: var(--chrome-border);
+  border-radius: 2px; outline: none;
+}
+.cs-slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--c-brand);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+
+/* Hex input */
+.cs-hex-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 10px;
+}
+.cs-hex-swatch {
+  width: 26px; height: 26px;
+  border-radius: 5px;
+  border: 1px solid var(--chrome-border);
+  flex-shrink: 0;
+}
+.cs-hex-input {
+  flex: 1; padding: 5px 7px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 5px;
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  outline: none;
+}
+.cs-hex-input:focus {
+  border-color: var(--c-brand);
+  box-shadow: 0 0 0 2px var(--c-brand-border);
+}
+
+/* Palette size */
+.cs-palette-size {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 8px;
+}
+.cs-palette-size label {
+  font-size: 9px; color: var(--chrome-text-secondary);
+  flex-shrink: 0;
+}
+.cs-palette-size select {
+  padding: 3px 6px;
+  border: 1px solid var(--chrome-border);
+  border-radius: 5px;
+  background: var(--chrome-surface);
+  color: var(--chrome-text);
+  font-size: 10px;
+}
+
+/* Scheme type */
+.cs-scheme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+.cs-scheme-btn {
+  padding: 5px 4px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 9px; font-weight: 500;
+  color: var(--chrome-text);
+  transition: all 0.1s;
+}
+.cs-scheme-btn:hover { border-color: var(--c-brand); }
+.cs-scheme-btn.active {
+  border-color: var(--c-brand);
+  background: var(--chrome-selection-bg);
+  color: var(--c-brand);
+}
+
+/* Palette strip */
+.cs-palette {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 24px;
+  margin-bottom: 10px;
+  box-shadow: 0 0 0 1px var(--chrome-border);
+}
+.cs-palette-chip {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-weight: 700;
+  cursor: pointer;
+  transition: flex 0.15s;
+}
+.cs-palette-chip:hover { flex: 2.5; }
+.cs-palette-chip span { opacity: 0; transition: opacity 0.15s; font-size: 8px; }
+.cs-palette-chip:hover span { opacity: 1; }
+
+/* Color slots */
+.cs-slot {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 4px 5px;
+  border-radius: 5px;
+  margin-bottom: 1px;
+  cursor: pointer;
+  transition: background 0.08s;
+}
+.cs-slot:hover { background: var(--chrome-hover); }
+.cs-slot-swatch {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.08);
+  flex-shrink: 0;
+  position: relative;
+  margin-top: 1px;
+}
+.cs-slot-swatch.locked::after {
+  content: '';
+  position: absolute; bottom: -2px; right: -2px;
+  width: 8px; height: 8px;
+  background: var(--c-brand);
+  border-radius: 50%;
+  border: 1.5px solid var(--chrome-surface);
+}
+.cs-slot-info { flex: 1; min-width: 0; }
+.cs-slot-name { font-size: 10px; font-weight: 600; color: var(--chrome-text); }
+.cs-slot-hex {
+  font-size: 8px;
+  font-family: 'SF Mono', Monaco, monospace;
+  color: var(--chrome-text-secondary);
+}
+.cs-slot-map {
+  font-size: 8px;
+  color: var(--chrome-text-dim);
+  line-height: 1.3;
+  margin-top: 1px;
+}
+.cs-slot-actions { display: flex; gap: 2px; margin-top: 2px; }
+.cs-slot-btn {
+  width: 18px; height: 18px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  border-radius: 3px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: 700;
+  color: var(--chrome-text-dim);
+  transition: all 0.1s;
+}
+.cs-slot-btn:hover { background: var(--chrome-hover); }
+.cs-slot-btn.locked {
+  background: var(--c-brand); color: #fff;
+  border-color: var(--c-brand);
+}
+.cs-color-input {
+  position: absolute;
+  width: 0; height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Neutral section */
+.cs-neutral-section {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--chrome-border);
+}
+.cs-neutral-slot {
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  margin-bottom: 1px;
+}
+.cs-neutral-slot:hover { background: var(--chrome-hover); }
+.cs-neutral-swatch {
+  width: 20px; height: 20px;
+  border-radius: 3px;
+  border: 1px solid rgba(0,0,0,0.08);
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+}
+.cs-neutral-swatch.locked::after {
+  content: '';
+  position: absolute; bottom: -2px; right: -2px;
+  width: 7px; height: 7px;
+  background: var(--c-brand);
+  border-radius: 50%;
+  border: 1px solid var(--chrome-surface);
+}
+.cs-neutral-name {
+  font-size: 9px; font-weight: 600; color: var(--chrome-text);
+  flex: 1; min-width: 0;
+}
+.cs-neutral-hex {
+  font-size: 8px;
+  font-family: 'SF Mono', Monaco, monospace;
+  color: var(--chrome-text-secondary);
+}
+.cs-neutral-actions { display: flex; gap: 2px; }
+.cs-auto-neutrals-btn {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface-alt);
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--chrome-text-secondary);
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.cs-auto-neutrals-btn:hover {
+  border-color: var(--c-brand);
+  color: var(--c-brand);
+}
+
+/* Contrast */
+.cs-contrast { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: 10px; }
+.cs-contrast-chip {
+  padding: 2px 6px; border-radius: 4px;
+  font-size: 8px; font-weight: 700;
+}
+.cc-pass { background: #D1FAE5; color: #065F46; }
+.cc-fail { background: #FEE2E2; color: #991B1B; }
+body.dark .cc-pass { background: #064E3B; color: #6EE7B7; }
+body.dark .cc-fail { background: #7F1D1D; color: #FCA5A5; }
+
+/* Export */
+.cs-export {
+  background: #1E1E2E;
+  color: #CDD6F4;
+  padding: 8px;
+  border-radius: 5px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: 9px;
+  line-height: 1.4;
+  white-space: pre;
+  overflow-x: auto;
+  margin-bottom: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.cs-export .p { color: #89B4FA; }
+.cs-export .v { color: #A6E3A1; }
+.cs-copy-btn {
+  width: 100%; padding: 5px;
+  border: 1px solid var(--chrome-border);
+  background: var(--chrome-surface);
+  border-radius: 5px;
+  font-size: 10px; font-weight: 600;
+  cursor: pointer;
+  color: var(--chrome-text);
+}
+.cs-copy-btn:hover { background: var(--chrome-hover); }
+</style>
+</head>
+<body>
+
+<!-- ================================================================
+     TOP BAR
+     ================================================================ -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="tb-breadcrumb">
+      <span class="bc-brand">CLAUDE</span>
+      <span>/</span>
+      <span>NEW CONTENT SLOT 1</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:4px;margin-left:12px;">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--chrome-icon)"><path d="M3 4h12M3 9h12M3 14h12"/></svg>
+    <span class="tb-title">New Experience 1</span>
+    <button class="tb-dots">&#8942;</button>
+  </div>
+  <div class="toolbar">
+    <button class="tb-tool active"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 2l5 14 2-6 6-2L4 2z"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="10" height="10" rx="1"/><path d="M4 2v2M14 2v2M4 14v2M14 14v2M2 4h2M2 14h2M14 4h2M14 14h2"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="3" width="12" height="12" rx="1"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="9" cy="9" r="6"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 3h8M9 3v12M6 15h6"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="4" width="12" height="10" rx="1"/><circle cx="6.5" cy="7.5" r="1.5"/><path d="M3 12l3-3 2 2 3-4 4 5"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 15l4-1L15 6l-2-2L5 12l-2 3z"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 5L2 9l4 4M12 5l4 4-4 4"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 10l2-2M7 12a3 3 0 010-4l1-1a3 3 0 014 0M11 6a3 3 0 010 4l-1 1a3 3 0 01-4 0"/></svg></button>
+    <button class="tb-tool"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 4h12v9H7l-4 3V4z"/></svg></button>
+  </div>
+  <div class="topbar-right">
+    <div class="tb-avatar">CC</div>
+    <span class="tb-zoom">45%</span>
+    <button class="tb-icon-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg></button>
+    <button class="tb-icon-btn green"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"/></svg></button>
+    <button class="tb-icon-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M8 3v10M5 10l3 3 3-3"/></svg></button>
+  </div>
+</div>
+
+<!-- ================================================================
+     3-COLUMN LAYOUT
+     ================================================================ -->
+<div class="main-layout">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="lp-tabs">
+      <button class="lp-back"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 3L5 7l4 4"/></svg></button>
+      <button class="lp-tab active">Layers</button>
+      <button class="lp-tab">Assets</button>
+    </div>
+
+    <div class="lp-section-header">
+      <span class="lp-section-title">Variants</span>
+      <button class="lp-add-btn">+</button>
+    </div>
+    <div class="variant-row">
+      <span class="variant-chip">Variant 1</span>
+      <span class="variant-meta">All screen sizes</span>
+      <div class="variant-devices"><span></span><span></span><span></span></div>
+    </div>
+
+    <div class="lp-variant-label">
+      <span>Variant 1</span>
+      <div class="lp-search"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="4"/><path d="M10 10l3 3"/></svg></div>
+    </div>
+
+    <div class="layer-tree">
+      <div class="layer-item selected">
+        <span class="l-toggle">&#9660;</span>
+        <span class="l-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="10" height="10" rx="1" stroke-dasharray="2 1.5"/></svg></span>
+        <span class="layer-name" style="color:var(--c-brand)">Board</span>
+      </div>
+      <div class="layer-item" style="padding-left: 36px;">
+        <span class="l-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 3h6M7 3v8M5 11h4"/></svg></span>
+        <span class="layer-name">Test</span>
+      </div>
+      <div class="layer-item" style="padding-left: 28px;">
+        <span class="l-toggle">&#9660;</span>
+        <span class="l-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="4" width="5" height="5" rx="0.5"/><rect x="6" y="2" width="5" height="5" rx="0.5"/></svg></span>
+        <span class="layer-name">Group</span>
+      </div>
+      <div class="layer-item" style="padding-left: 50px;">
+        <span class="l-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="3" width="10" height="8" rx="0.5"/></svg></span>
+        <span class="layer-name">Rectangle</span>
+      </div>
+      <div class="layer-item" style="padding-left: 50px;">
+        <span class="l-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5"/></svg></span>
+        <span class="layer-name">Ellipse</span>
+      </div>
+    </div>
+
+    <div class="lp-bottom">
+      <div class="lp-bottom-row">
+        <span>Foreground</span>
+        <div class="lp-b-icons">
+          <span class="lp-b-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5"/><circle cx="7" cy="7" r="2"/></svg></span>
+          <span class="lp-b-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="4" y="2" width="6" height="10" rx="1"/><path d="M6 4h2M6 10h2"/></svg></span>
+          <span class="lp-b-icon" style="font-size:10px">&#9662;</span>
+        </div>
+      </div>
+      <div class="lp-bottom-row">
+        <span>Background</span>
+        <div class="lp-b-icons">
+          <span class="lp-b-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="7" r="5"/><circle cx="7" cy="7" r="2"/></svg></span>
+          <span class="lp-b-icon"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="4" y="2" width="6" height="10" rx="1"/><path d="M6 4h2M6 10h2"/></svg></span>
+          <span class="lp-b-icon" style="font-size:10px">&#9662;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER CANVAS -->
+  <div class="center-area" id="centerArea">
+    <div class="ruler-corner"></div>
+    <div class="ruler-h" id="rulerH"></div>
+    <div class="ruler-v" id="rulerV"></div>
+    <div class="canvas-vp" id="canvasVP">
+      <div class="board-label" id="boardLabel">Board</div>
+      <div class="board-frame" id="boardFrame">
+        <div class="board-selection" style="inset:-1px;">
+          <div class="sel-handle tl"></div>
+          <div class="sel-handle tr"></div>
+          <div class="sel-handle bl"></div>
+          <div class="sel-handle br"></div>
+          <div class="sel-handle tc"></div>
+          <div class="sel-handle bc"></div>
+          <div class="sel-handle ml"></div>
+          <div class="sel-handle mr"></div>
+        </div>
+        <div class="c-ellipse" id="cEllipse"></div>
+        <div class="c-rect" id="cRect"></div>
+        <div class="c-text" id="cText">Test</div>
+      </div>
+    </div>
+    <div class="bottom-tray">
+      <span>&#9711;</span>
+      <span style="font-weight:700;font-size:15px">T</span>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -- Text element properties -->
+  <div class="right-panel" id="rightPanel">
+    <!-- Tab row 1: DESIGN | ANALYZE -->
+    <div class="rp-tabs">
+      <button class="rp-tab active">Design</button>
+      <button class="rp-tab">Analyze</button>
+    </div>
+    <!-- Tab row 2: INTERACT | INSPECT -->
+    <div class="rp-tabs">
+      <button class="rp-tab">Interact</button>
+      <button class="rp-tab">Inspect</button>
+    </div>
+
+    <!-- TEXT section -->
+    <div class="rp-section">
+      <div class="rp-section-title">
+        <span><span class="rp-collapse-icon">&#9660;</span> Text</span>
+        <button>+</button>
+      </div>
+
+      <!-- Font family -->
+      <div class="rp-row">
+        <select class="rp-select" style="flex:1"><option>Source Sans Pro</option><option>Inter</option><option>Roboto</option></select>
+      </div>
+
+      <!-- Font size + weight -->
+      <div class="rp-row">
+        <input class="rp-text-input" style="width:60px;flex:0 0 60px" value="125.75">
+        <select class="rp-select" style="flex:0 0 34px;padding:4px 2px;text-align:center;"><option>&#9662;</option></select>
+        <select class="rp-select" style="flex:1"><option>regular</option><option>bold</option><option>semi-bold</option><option>light</option></select>
+      </div>
+
+      <!-- Line height + letter spacing -->
+      <div class="rp-row">
+        <span class="rp-small-icon" title="Line height"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 2h10M2 12h10M5 5l2-2 2 2M5 9l2 2 2-2"/></svg></span>
+        <input class="rp-text-input" style="width:40px;flex:0 0 40px" value="1.2">
+        <span class="rp-small-icon" title="Letter spacing"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 3v8M13 3v8M4 7h6M4 5l-2 2 2 2M10 5l2 2-2 2"/></svg></span>
+        <input class="rp-text-input" style="width:40px;flex:0 0 40px" value="0">
+      </div>
+
+      <!-- Text transform: AA  Aa  aa -->
+      <div class="rp-row">
+        <button class="rp-icon-btn" title="All Caps" style="font-size:10px;font-weight:700;width:auto;padding:0 6px;">AA</button>
+        <button class="rp-icon-btn" title="Title Case" style="font-size:10px;font-weight:700;width:auto;padding:0 6px;">Aa</button>
+        <button class="rp-icon-btn" title="Lower Case" style="font-size:10px;font-weight:700;width:auto;padding:0 6px;">aa</button>
+        <div style="flex:1"></div>
+        <select class="rp-select" style="flex:0 0 90px;font-size:10px"><option>No H Level</option><option>H1</option><option>H2</option><option>H3</option><option>H4</option><option>H5</option><option>H6</option></select>
+      </div>
+
+      <!-- Alignment row 1: left center right justify | paragraph indent | super sub lock -->
+      <div class="rp-row" style="gap:1px">
+        <button class="rp-icon-btn active" title="Justify"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M2 6h10M2 9h10M2 12h10"/></svg></button>
+        <button class="rp-icon-btn" title="Align left"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M2 6h7M2 9h10M2 12h7"/></svg></button>
+        <button class="rp-icon-btn" title="Align center"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M4 6h6M2 9h10M4 12h6"/></svg></button>
+        <button class="rp-icon-btn" title="Align right"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M5 6h7M2 9h10M5 12h7"/></svg></button>
+        <div class="rp-separator"></div>
+        <button class="rp-icon-btn" title="Indent"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M5 6h7M5 9h7M2 12h10M2 5l2 2-2 2"/></svg></button>
+        <button class="rp-icon-btn" title="Outdent"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h10M5 6h7M5 9h7M2 12h10M4 5l-2 2 2 2"/></svg></button>
+        <div class="rp-separator"></div>
+        <button class="rp-icon-btn sm" title="Superscript" style="font-size:9px">x<sup style="font-size:7px">2</sup></button>
+        <button class="rp-icon-btn sm" title="Subscript" style="font-size:9px">x<sub style="font-size:7px">2</sub></button>
+        <button class="rp-icon-btn sm" title="Lock font"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3" y="7" width="8" height="5" rx="1"/><path d="M5 7V5a2 2 0 014 0v2"/></svg></button>
+      </div>
+
+      <!-- Icon row 2: auto-color, manual-color, list-indent, list-outdent, vert align, underline, strikethrough -->
+      <div class="rp-row" style="gap:1px">
+        <button class="rp-icon-btn" title="Auto color"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 2l4 10M3 12l4-10"/><path d="M4 9h6"/><path d="M2 12h10" stroke="currentColor" stroke-width="2"/></svg></button>
+        <button class="rp-icon-btn" title="Manual color">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="7" cy="5" r="3"/><path d="M4 12h6" stroke-width="2.5" stroke="var(--c-brand)"/></svg>
+        </button>
+        <div class="rp-separator"></div>
+        <button class="rp-icon-btn" title="Bulleted list"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="3" cy="4" r="1" fill="currentColor"/><circle cx="3" cy="7" r="1" fill="currentColor"/><circle cx="3" cy="10" r="1" fill="currentColor"/><path d="M6 4h6M6 7h6M6 10h6"/></svg></button>
+        <button class="rp-icon-btn" title="Numbered list"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M6 4h6M6 7h6M6 10h6"/><text x="2" y="5" font-size="4" fill="currentColor" font-weight="700">1</text><text x="2" y="8" font-size="4" fill="currentColor" font-weight="700">2</text><text x="2" y="11" font-size="4" fill="currentColor" font-weight="700">3</text></svg></button>
+        <div class="rp-separator"></div>
+        <button class="rp-icon-btn" title="Vertical align top"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 2h10M7 5v7M5 7l2-2 2 2"/></svg></button>
+        <button class="rp-icon-btn" title="Vertical align middle"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 7h10M7 3v3M7 8v3M5 5l2-2 2 2M5 9l2 2 2-2"/></svg></button>
+        <button class="rp-icon-btn" title="Vertical align bottom"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 12h10M7 2v7M5 7l2 2 2-2"/></svg></button>
+        <div class="rp-separator"></div>
+        <button class="rp-icon-btn" title="Underline" style="font-size:11px;text-decoration:underline;font-weight:600;">U</button>
+        <button class="rp-icon-btn" title="Strikethrough" style="font-size:11px;text-decoration:line-through;font-weight:600;">S</button>
+      </div>
+
+      <!-- Hyperlink -->
+      <div class="rp-link-row" style="margin-top:4px">
+        <input class="rp-link-input" placeholder="Hyperlink URL" value="">
+        <select class="rp-link-select"><option>Same Tab</option><option>New Tab</option></select>
+      </div>
+    </div>
+
+    <!-- FILL section -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span><span class="rp-collapse-icon">&#9660;</span> Fill</span><button>+</button></div>
+      <div class="rp-fill-row">
+        <div class="rp-fill-swatch" style="background:#000000;"></div>
+        <span class="rp-fill-hex">000000</span>
+        <span class="rp-fill-opacity">% 100 <span style="margin-left:4px;color:var(--chrome-text-dim)">&#8722;</span></span>
+      </div>
+    </div>
+
+    <!-- STROKE -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span>Stroke</span><button>+</button></div>
+    </div>
+
+    <!-- SHADOW -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span>Shadow</span><button>+</button></div>
+    </div>
+
+    <!-- BLUR -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span>Blur</span><button>+</button></div>
+    </div>
+
+    <!-- CUSTOM CSS CLASSES -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span>Custom CSS Classes</span><button>+</button></div>
+    </div>
+
+    <!-- FEATURE INTEGRATION -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span>Feature Integration</span><button>+</button></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="rp-section">
+      <div class="rp-section-title"><span>Export</span><button>+</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Color Scheme Toggle -->
+<button class="cs-toggle" id="csToggle" onclick="togglePanel()">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="8"/><path d="M10 2a8 8 0 000 16V2z" fill="currentColor"/></svg>
+</button>
+
+<!-- Floating Draggable Color Scheme Panel -->
+<div class="cs-panel" id="csPanel">
+  <div class="cs-header" id="csDragHandle">
+    <h2>Color Scheme</h2>
+    <button class="cs-close" onclick="togglePanel()">&times;</button>
+  </div>
+  <div class="cs-body">
+    <!-- Mode -->
+    <div class="cs-mode-toggle">
+      <button class="cs-mode-btn active" id="modeLight" onclick="setMode('light',this)">Light</button>
+      <button class="cs-mode-btn" id="modeDark" onclick="setMode('dark',this)">Dark</button>
+    </div>
+    <div class="cs-mode-status">
+      <div class="cs-mode-badge active-mode" id="badgeLight">Light: not set</div>
+      <div class="cs-mode-badge" id="badgeDark">Dark: not set</div>
+    </div>
+    <div class="cs-action-row">
+      <button class="cs-set-mode-btn" id="setModeBtn" onclick="saveCurrentMode()">Save as Light Mode Colors</button>
+      <button class="cs-reset-btn" onclick="resetToDefaults()" title="Reset all colors to defaults">Reset</button>
+    </div>
+
+    <!-- Wheel -->
+    <div class="cs-label">Primary Color</div>
+    <div class="cs-wheel-wrap">
+      <canvas id="colorWheel" width="150" height="150"></canvas>
+      <div class="cs-wheel-dot" id="wheelDot"></div>
+    </div>
+    <div class="cs-slider-row">
+      <label>Saturation</label>
+      <input type="range" id="satSlider" min="10" max="100" value="65" oninput="onSlider()">
+    </div>
+    <div class="cs-slider-row">
+      <label>Lightness</label>
+      <input type="range" id="lightSlider" min="15" max="80" value="50" oninput="onSlider()">
+    </div>
+    <div class="cs-hex-row">
+      <div class="cs-hex-swatch" id="hexSwatch"></div>
+      <input type="text" class="cs-hex-input" id="hexInput" value="#7B61FF" maxlength="7">
+    </div>
+
+    <!-- Palette size -->
+    <div class="cs-label">Palette Size</div>
+    <div class="cs-palette-size">
+      <label>Colors:</label>
+      <select id="paletteSizeSelect" onchange="regenerate()">
+        <option value="3">3 (minimal)</option>
+        <option value="5">5 (standard)</option>
+        <option value="7">7 (extended)</option>
+        <option value="9" selected>9 (full)</option>
+      </select>
+    </div>
+
+    <!-- Scheme -->
+    <div class="cs-label">Scheme Type</div>
+    <div class="cs-scheme-grid">
+      <button class="cs-scheme-btn active" onclick="setScheme('complementary',this)">Compl.</button>
+      <button class="cs-scheme-btn" onclick="setScheme('analogous',this)">Analog.</button>
+      <button class="cs-scheme-btn" onclick="setScheme('triadic',this)">Triadic</button>
+      <button class="cs-scheme-btn" onclick="setScheme('split',this)">Split</button>
+      <button class="cs-scheme-btn" onclick="setScheme('monochromatic',this)">Mono</button>
+      <button class="cs-scheme-btn" onclick="setScheme('tetradic',this)">Tetrad.</button>
+    </div>
+
+    <!-- Palette -->
+    <div class="cs-label">Palette</div>
+    <div class="cs-palette" id="paletteStrip"></div>
+
+    <!-- Color Slots -->
+    <div class="cs-label">Scheme Colors</div>
+    <div id="colorSlots"></div>
+
+    <!-- Neutral / Surface Colors -->
+    <div class="cs-neutral-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span class="cs-label" style="margin:0">Neutral / Surface Colors</span>
+      </div>
+      <div id="neutralSlots"></div>
+      <button class="cs-auto-neutrals-btn" onclick="autoGenerateNeutrals()">Auto-generate Neutrals</button>
+    </div>
+
+    <!-- Contrast -->
+    <div class="cs-label" style="margin-top:10px">Contrast</div>
+    <div id="contrastChips" class="cs-contrast"></div>
+
+    <!-- Export -->
+    <div class="cs-label">CSS Export</div>
+    <div class="cs-export" id="exportBlock"></div>
+    <button class="cs-copy-btn" onclick="copyCSS()">Copy to Clipboard</button>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// Canvas layout
+// ================================================================
+function layoutCanvas() {
+  const vp = document.getElementById('canvasVP');
+  const vpW = vp.clientWidth, vpH = vp.clientHeight;
+  const bW_world = 1440, bH_world = 935;
+  const scale = Math.min((vpW - 60) / bW_world, (vpH - 60) / bH_world, 0.52);
+  const bW = bW_world * scale, bH = bH_world * scale;
+  const bX = (vpW - bW) / 2, bY = (vpH - bH) / 2 + 8;
+
+  const board = document.getElementById('boardFrame');
+  board.style.cssText = `left:${bX}px;top:${bY}px;width:${bW}px;height:${bH}px;`;
+
+  document.getElementById('boardLabel').style.cssText = `left:${bX}px;top:${bY-18}px;`;
+
+  const rX = x => ((x-172)/bW_world)*100+'%';
+  const rY = y => ((y-191)/bH_world)*100+'%';
+  const rW = w => (w/bW_world)*100+'%';
+  const rH = h => (h/bH_world)*100+'%';
+
+  const el = document.getElementById('cEllipse');
+  el.style.cssText = `left:${rX(520)};top:${rY(394)};width:${rW(349)};height:${rH(349)};`;
+
+  const rect = document.getElementById('cRect');
+  rect.style.cssText = `left:${rX(955)};top:${rY(649)};width:${rW(309)};height:${rH(253)};`;
+
+  const txt = document.getElementById('cText');
+  txt.style.cssText = `left:${rX(949)};top:${rY(459)};font-size:${126*scale}px;`;
+
+  renderRulers(bX, bY, scale);
+}
+
+function renderRulers(bX, bY, scale) {
+  const rH = document.getElementById('rulerH');
+  const rV = document.getElementById('rulerV');
+  rH.innerHTML = ''; rV.innerHTML = '';
+  for (let i = -3; i <= 20; i++) {
+    const wx = i * 250;
+    const px = bX + (wx - 172) * scale;
+    if (px > -30 && px < rH.clientWidth + 30) {
+      const t = document.createElement('span');
+      t.className = 'ruler-tick'; t.style.left = px + 'px'; t.textContent = wx;
+      rH.appendChild(t);
+    }
+  }
+  for (let i = -3; i <= 15; i++) {
+    const wy = i * 250;
+    const py = bY + (wy - 191) * scale;
+    if (py > -30 && py < rV.clientHeight + 30) {
+      const t = document.createElement('span');
+      t.className = 'ruler-tick'; t.style.top = py + 'px'; t.textContent = wy;
+      rV.appendChild(t);
+    }
+  }
+}
+
+window.addEventListener('resize', layoutCanvas);
+setTimeout(layoutCanvas, 30);
+
+// ================================================================
+// Color engine
+// ================================================================
+function hexToHSL(hex) {
+  hex = hex.replace('#','');
+  const r=parseInt(hex.substr(0,2),16)/255, g=parseInt(hex.substr(2,2),16)/255, b=parseInt(hex.substr(4,2),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){h=s=0}else{
+    const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break}
+  }
+  return {h:h*360,s:s*100,l:l*100};
+}
+function hslToHex(h,s,l) {
+  h=((h%360)+360)%360;s=Math.max(0,Math.min(100,s));l=Math.max(0,Math.min(100,l));
+  const s1=s/100,l1=l/100,c=(1-Math.abs(2*l1-1))*s1,x=c*(1-Math.abs((h/60)%2-1)),m=l1-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}
+  else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}
+  const toH=v=>Math.round((v+m)*255).toString(16).padStart(2,'0');
+  return `#${toH(r)}${toH(g)}${toH(b)}`.toUpperCase();
+}
+function contrast(c1,c2) {
+  function lum(hex){const rgb=[parseInt(hex.substr(1,2),16),parseInt(hex.substr(3,2),16),parseInt(hex.substr(5,2),16)];
+  const[r,g,b]=rgb.map(c=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4)});return .2126*r+.7152*g+.0722*b}
+  const l1=lum(c1),l2=lum(c2);return(Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05);
+}
+
+let hue=255, sat=65, light=50;
+let scheme='complementary', isDark=false, locked={}, colors={};
+let savedLight = null;
+let savedDark = null;
+
+// Neutral colors
+let neutralColors = {};
+let neutralLocked = {};
+const neutralDefaults = {
+  light: {
+    surface: '#FFFFFF',
+    'surface-alt': '#E5E5E9',
+    border: '#E4E4E8',
+    text: '#1B1B1F',
+    'text-secondary': '#65666B',
+    'text-dim': '#A0A1A7'
+  },
+  dark: {
+    surface: '#212225',
+    'surface-alt': '#131416',
+    border: '#35363B',
+    text: '#E3E3E7',
+    'text-secondary': '#9B9CA2',
+    'text-dim': '#5C5D63'
+  }
+};
+
+const neutralSlotDefs = [
+  {key:'surface', name:'Surface', desc:'Panel backgrounds'},
+  {key:'surface-alt', name:'Surface Alt', desc:'Canvas background, ruler bg'},
+  {key:'border', name:'Border', desc:'All borders and dividers'},
+  {key:'text', name:'Text', desc:'Primary text color'},
+  {key:'text-secondary', name:'Text Secondary', desc:'Labels, section titles'},
+  {key:'text-dim', name:'Text Dim', desc:'Placeholder text, disabled'}
+];
+
+// Color mapping descriptions
+const colorMapDescriptions = {
+  'primary': 'Active tabs, selected items, toolbar active, checkboxes, selection borders',
+  'primary-light': 'Hover states, variant chip bg',
+  'primary-dark': 'Header accents, dark UI elements',
+  'accent': 'Constraint bars, accent indicators',
+  'accent-light': 'Accent hover states',
+  'accent-dark': 'Accent pressed states',
+  'highlight': 'Success states, green checkmark',
+  'highlight-light': 'Highlight hover states',
+  'highlight-dark': 'Highlight pressed states'
+};
+
+const allSlots = [
+  {key:'primary',name:'Primary'},
+  {key:'primary-light',name:'Primary Light'},
+  {key:'primary-dark',name:'Primary Dark'},
+  {key:'accent',name:'Accent'},
+  {key:'accent-light',name:'Accent Light'},
+  {key:'accent-dark',name:'Accent Dark'},
+  {key:'highlight',name:'Highlight'},
+  {key:'highlight-light',name:'Highlight Light'},
+  {key:'highlight-dark',name:'Highlight Dark'},
+];
+
+function getVisibleSlots() {
+  const n = parseInt(document.getElementById('paletteSizeSelect').value);
+  if (n===3) return allSlots.filter(s=>['primary','accent','highlight'].includes(s.key));
+  if (n===5) return allSlots.filter(s=>['primary','primary-light','primary-dark','accent','highlight'].includes(s.key));
+  if (n===7) return allSlots.filter(s=>!s.key.endsWith('-light') || s.key==='primary-light');
+  return allSlots;
+}
+
+// Init neutral colors
+function initNeutrals() {
+  const mode = isDark ? 'dark' : 'light';
+  neutralColors = Object.assign({}, neutralDefaults[mode]);
+}
+
+// Wheel
+const wCanvas = document.getElementById('colorWheel');
+const wCtx = wCanvas.getContext('2d');
+function drawWheel() {
+  const cx=75,cy=75,r=73;
+  const img=wCtx.createImageData(150,150);
+  for(let y=0;y<150;y++)for(let x=0;x<150;x++){
+    const dx=x-cx,dy=y-cy,d=Math.sqrt(dx*dx+dy*dy),i=(y*150+x)*4;
+    if(d<=r){const a=((Math.atan2(dy,dx)*180/Math.PI)+360)%360;const s2=(d/r)*100;
+    const hex=hslToHex(a,s2,light);img.data[i]=parseInt(hex.substr(1,2),16);img.data[i+1]=parseInt(hex.substr(3,2),16);img.data[i+2]=parseInt(hex.substr(5,2),16);img.data[i+3]=255}
+    else if(d<=r+1){img.data[i+3]=Math.max(0,(r+1-d)*255)}
+  }
+  wCtx.putImageData(img,0,0);
+}
+function updateDot() {
+  const cx=75,cy=75,r=73,rad=hue*Math.PI/180,d=(sat/100)*r;
+  const dot=document.getElementById('wheelDot');
+  dot.style.left=(cx+Math.cos(rad)*d)+'px';
+  dot.style.top=(cy+Math.sin(rad)*d)+'px';
+  dot.style.backgroundColor=hslToHex(hue,sat,light);
+}
+
+let dragging=false;
+function wheelInput(e){
+  const rect=wCanvas.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top,cx=rect.width/2,cy=rect.height/2;
+  const dx=x-cx,dy=y-cy,d=Math.sqrt(dx*dx+dy*dy),mr=rect.width/2;
+  if(d<=mr){hue=((Math.atan2(dy,dx)*180/Math.PI)+360)%360;sat=Math.min(100,(d/mr)*100);
+  document.getElementById('satSlider').value=sat;regenerate()}
+}
+wCanvas.addEventListener('mousedown',e=>{dragging=true;wheelInput(e)});
+window.addEventListener('mousemove',e=>{if(dragging)wheelInput(e)});
+window.addEventListener('mouseup',()=>{dragging=false});
+wCanvas.addEventListener('touchstart',e=>{e.preventDefault();wheelInput(e.touches[0])});
+wCanvas.addEventListener('touchmove',e=>{e.preventDefault();wheelInput(e.touches[0])});
+
+function onSlider(){sat=+document.getElementById('satSlider').value;light=+document.getElementById('lightSlider').value;regenerate()}
+
+document.getElementById('hexInput').addEventListener('input',function(e){
+  let v=e.target.value.trim();if(!v.startsWith('#'))v='#'+v;
+  if(/^#[0-9A-Fa-f]{6}$/.test(v)){const h=hexToHSL(v);hue=h.h;sat=h.s;light=h.l;
+  document.getElementById('satSlider').value=sat;document.getElementById('lightSlider').value=light;regenerate()}
+});
+
+function genScheme() {
+  const h=hue,s=sat,l=light;
+  let aH,hlH;
+  switch(scheme){
+    case'complementary':aH=(h+180)%360;hlH=(h+150)%360;break;
+    case'analogous':aH=(h+30)%360;hlH=(h+60)%360;break;
+    case'triadic':aH=(h+120)%360;hlH=(h+240)%360;break;
+    case'split':aH=(h+150)%360;hlH=(h+210)%360;break;
+    case'monochromatic':aH=h;hlH=h;break;
+    case'tetradic':aH=(h+90)%360;hlH=(h+180)%360;break;
+  }
+  const aS=scheme==='monochromatic'?Math.max(s-20,15):s;
+  const aL=scheme==='monochromatic'?Math.min(l+15,75):l;
+  const hS=scheme==='monochromatic'?Math.max(s-35,10):Math.min(s+5,100);
+  const hL=scheme==='monochromatic'?Math.max(l-10,30):Math.max(l-5,25);
+
+  const nc={
+    'primary':hslToHex(h,s,l),
+    'primary-light':hslToHex(h,Math.max(s-15,20),Math.min(l+20,85)),
+    'primary-dark':hslToHex(h,Math.min(s+10,100),Math.max(l-15,20)),
+    'accent':hslToHex(aH,aS,aL),
+    'accent-light':hslToHex(aH,Math.max(aS-15,20),Math.min(aL+20,85)),
+    'accent-dark':hslToHex(aH,Math.min(aS+10,100),Math.max(aL-15,20)),
+    'highlight':hslToHex(hlH,hS,hL),
+    'highlight-light':hslToHex(hlH,Math.max(hS-20,15),Math.min(hL+25,85)),
+    'highlight-dark':hslToHex(hlH,Math.min(hS+10,100),Math.max(hL-15,20)),
+  };
+  for(const k in nc){if(locked[k])nc[k]=colors[k]}
+  colors=nc;
+}
+
+function applyColors() {
+  const r=document.documentElement;
+  r.style.setProperty('--c-brand',colors.primary);
+  r.style.setProperty('--c-brand-hover',colors['primary-dark']);
+  r.style.setProperty('--c-brand-muted',colors.primary+'14');
+  r.style.setProperty('--c-brand-border',colors.primary+'4D');
+  r.style.setProperty('--chrome-selection',colors.primary);
+  r.style.setProperty('--chrome-selection-bg',colors.primary+(isDark?'26':'14'));
+
+  // Apply neutral colors
+  r.style.setProperty('--chrome-surface', neutralColors.surface);
+  r.style.setProperty('--chrome-surface-alt', neutralColors['surface-alt']);
+  r.style.setProperty('--canvas-bg', neutralColors['surface-alt']);
+  r.style.setProperty('--chrome-border', neutralColors.border);
+  r.style.setProperty('--chrome-text', neutralColors.text);
+  r.style.setProperty('--chrome-text-secondary', neutralColors['text-secondary']);
+  r.style.setProperty('--chrome-text-dim', neutralColors['text-dim']);
+}
+
+function renderSlots() {
+  const visible = getVisibleSlots();
+  document.getElementById('colorSlots').innerHTML = visible.map(s=>{
+    const c=colors[s.key],lk=locked[s.key];
+    const mapDesc = colorMapDescriptions[s.key] || '';
+    return `<div class="cs-slot">
+      <div class="cs-slot-swatch${lk?' locked':''}" style="background:${c};cursor:pointer" onclick="openPicker('${s.key}')"></div>
+      <input type="color" class="cs-color-input" id="picker-${s.key}" value="${c}" onchange="onPickerChange('${s.key}',this.value)">
+      <div class="cs-slot-info" onclick="openPicker('${s.key}')" style="cursor:pointer">
+        <div class="cs-slot-name">${s.name}</div>
+        <div class="cs-slot-hex">${c}</div>
+        ${mapDesc ? `<div class="cs-slot-map">${mapDesc}</div>` : ''}
+      </div>
+      <div class="cs-slot-actions">
+        <button class="cs-slot-btn${lk?' locked':''}" onclick="toggleLock('${s.key}')" title="${lk?'Locked':'Click to lock'}">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+            ${lk?'<rect x="1.5" y="5" width="7" height="4" rx="0.5"/><path d="M3 5V3.5a2 2 0 014 0V5"/>':'<rect x="1.5" y="5" width="7" height="4" rx="0.5"/><path d="M3 5V3.5a2 2 0 014 0V4"/>'}
+          </svg>
+        </button>
+        <button class="cs-slot-btn" onclick="openPicker('${s.key}')" title="Pick color">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="5" cy="5" r="3.5"/><circle cx="5" cy="5" r="1.2" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderNeutralSlots() {
+  document.getElementById('neutralSlots').innerHTML = neutralSlotDefs.map(s=>{
+    const c = neutralColors[s.key];
+    const lk = neutralLocked[s.key];
+    return `<div class="cs-neutral-slot">
+      <div class="cs-neutral-swatch${lk?' locked':''}" style="background:${c}" onclick="openNeutralPicker('${s.key}')"></div>
+      <input type="color" class="cs-color-input" id="npicker-${s.key}" value="${c}" onchange="onNeutralPickerChange('${s.key}',this.value)">
+      <span class="cs-neutral-name">${s.name} <span style="font-weight:400;color:var(--chrome-text-dim);font-size:8px">${s.desc}</span></span>
+      <span class="cs-neutral-hex">${c}</span>
+      <div class="cs-neutral-actions">
+        <button class="cs-slot-btn${lk?' locked':''}" onclick="toggleNeutralLock('${s.key}')" title="${lk?'Locked':'Lock'}" style="width:16px;height:16px;">
+          <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+            ${lk?'<rect x="1.5" y="5" width="7" height="4" rx="0.5"/><path d="M3 5V3.5a2 2 0 014 0V5"/>':'<rect x="1.5" y="5" width="7" height="4" rx="0.5"/><path d="M3 5V3.5a2 2 0 014 0V4"/>'}
+          </svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openNeutralPicker(key) {
+  const input = document.getElementById('npicker-'+key);
+  if(input) input.click();
+}
+
+function onNeutralPickerChange(key, val) {
+  neutralColors[key] = val.toUpperCase();
+  neutralLocked[key] = true;
+  applyColors(); renderNeutralSlots(); renderExport();
+}
+
+function toggleNeutralLock(key) {
+  neutralLocked[key] = !neutralLocked[key];
+  renderNeutralSlots();
+}
+
+function autoGenerateNeutrals() {
+  const mode = isDark ? 'dark' : 'light';
+  const defaults = neutralDefaults[mode];
+  for (const key in defaults) {
+    if (!neutralLocked[key]) {
+      neutralColors[key] = defaults[key];
+    }
+  }
+  applyColors(); renderNeutralSlots(); renderExport();
+}
+
+function openPicker(key) {
+  const input = document.getElementById('picker-'+key);
+  if(input) input.click();
+}
+
+function onPickerChange(key, val) {
+  colors[key] = val.toUpperCase();
+  locked[key] = true;
+  applyColors();renderSlots();renderPalette();renderContrast();renderExport();
+}
+
+function toggleLock(key) {
+  locked[key] = !locked[key];
+  renderSlots();
+}
+
+function renderPalette() {
+  const visible = getVisibleSlots();
+  document.getElementById('paletteStrip').innerHTML = visible.map(s=>{
+    const c=colors[s.key],tc=contrast(c,'#FFFFFF')>3?'#FFF':'#000';
+    return `<div class="cs-palette-chip" style="background:${c};color:${tc}"><span>${c}</span></div>`;
+  }).join('');
+}
+
+function renderContrast() {
+  const bg=isDark?'#2A2B30':'#FFFFFF';
+  const checks=[{l:'Primary',c:colors.primary},{l:'Accent',c:colors.accent},{l:'Highlight',c:colors.highlight}];
+  document.getElementById('contrastChips').innerHTML=checks.map(ck=>{
+    const r=contrast(ck.c,bg).toFixed(1),p=r>=4.5;
+    return `<div class="cs-contrast-chip ${p?'cc-pass':'cc-fail'}">${ck.l}: ${r}:1 ${p?'AA':'Fail'}</div>`;
+  }).join('');
+}
+
+function renderExport() {
+  const visible = getVisibleSlots();
+  const lines=visible.map(s=>`  <span class="p">--${s.key}</span>: <span class="v">${colors[s.key]}</span>;`).join('\n');
+  const nLines = neutralSlotDefs.map(s=>`  <span class="p">--${s.key}</span>: <span class="v">${neutralColors[s.key]}</span>;`).join('\n');
+  document.getElementById('exportBlock').innerHTML=`:root {\n${lines}\n\n  /* Neutrals */\n${nLines}\n}`;
+}
+
+function copyCSS(){
+  navigator.clipboard.writeText(document.getElementById('exportBlock').textContent).then(()=>{
+    const b=document.querySelector('.cs-copy-btn');b.textContent='Copied!';setTimeout(()=>b.textContent='Copy to Clipboard',1500);
+  });
+}
+
+function setMode(m,btn){
+  isDark=m==='dark';
+  document.body.classList.toggle('dark',isDark);
+  document.querySelectorAll('.cs-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const saved = isDark ? savedDark : savedLight;
+  if (saved) {
+    colors = JSON.parse(JSON.stringify(saved.colors));
+    locked = JSON.parse(JSON.stringify(saved.locked));
+    neutralColors = JSON.parse(JSON.stringify(saved.neutralColors || neutralDefaults[isDark?'dark':'light']));
+    neutralLocked = JSON.parse(JSON.stringify(saved.neutralLocked || {}));
+    const hsl = hexToHSL(colors.primary);
+    hue = hsl.h; sat = hsl.s; light = hsl.l;
+    document.getElementById('satSlider').value = sat;
+    document.getElementById('lightSlider').value = light;
+  } else {
+    // Auto-generate neutrals for the mode
+    autoGenerateNeutrals();
+  }
+
+  applyColors();drawWheel();updateDot();renderSlots();renderNeutralSlots();renderPalette();renderContrast();renderExport();layoutCanvas();
+  updateModeBadges();
+  document.getElementById('hexInput').value = colors.primary;
+  document.getElementById('hexSwatch').style.backgroundColor = colors.primary;
+}
+
+function saveCurrentMode() {
+  const snapshot = {
+    colors: JSON.parse(JSON.stringify(colors)),
+    locked: JSON.parse(JSON.stringify(locked)),
+    neutralColors: JSON.parse(JSON.stringify(neutralColors)),
+    neutralLocked: JSON.parse(JSON.stringify(neutralLocked))
+  };
+  if (isDark) {
+    savedDark = snapshot;
+  } else {
+    savedLight = snapshot;
+  }
+  updateModeBadges();
+  const btn = document.getElementById('setModeBtn');
+  btn.classList.add('saved');
+  btn.textContent = (isDark ? 'Dark' : 'Light') + ' mode colors saved!';
+  setTimeout(() => {
+    btn.classList.remove('saved');
+    updateSetBtnText();
+  }, 1500);
+}
+
+function updateModeBadges() {
+  const bl = document.getElementById('badgeLight');
+  const bd = document.getElementById('badgeDark');
+  bl.className = 'cs-mode-badge' + (savedLight ? ' has-colors' : '') + (!isDark ? ' active-mode' : '');
+  bd.className = 'cs-mode-badge' + (savedDark ? ' has-colors' : '') + (isDark ? ' active-mode' : '');
+  bl.textContent = savedLight ? 'Light: saved' : 'Light: not set';
+  bd.textContent = savedDark ? 'Dark: saved' : 'Dark: not set';
+  updateSetBtnText();
+}
+
+function updateSetBtnText() {
+  const btn = document.getElementById('setModeBtn');
+  const modeName = isDark ? 'Dark' : 'Light';
+  const alreadySaved = isDark ? savedDark : savedLight;
+  btn.textContent = alreadySaved
+    ? 'Update ' + modeName + ' Mode Colors'
+    : 'Save as ' + modeName + ' Mode Colors';
+}
+
+function resetToDefaults() {
+  hue = 255; sat = 65; light = 50;
+  scheme = 'complementary';
+  locked = {};
+  neutralLocked = {};
+
+  document.getElementById('satSlider').value = sat;
+  document.getElementById('lightSlider').value = light;
+
+  // Reset scheme buttons
+  document.querySelectorAll('.cs-scheme-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.cs-scheme-btn').classList.add('active');
+
+  // Reset palette size
+  document.getElementById('paletteSizeSelect').value = '9';
+
+  initNeutrals();
+  regenerate();
+}
+
+function setScheme(s,btn){
+  scheme=s;document.querySelectorAll('.cs-scheme-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');regenerate();
+}
+
+function togglePanel(){
+  const panel = document.getElementById('csPanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open') && !panel._positioned) {
+    // Center the panel on first open
+    const pw = 340;
+    const ph = Math.min(window.innerHeight * 0.8, 700);
+    panel.style.left = ((window.innerWidth - pw) / 2) + 'px';
+    panel.style.top = ((window.innerHeight - ph) / 2 - 30) + 'px';
+    panel._positioned = true;
+  }
+}
+
+function regenerate(){
+  genScheme();applyColors();drawWheel();updateDot();renderSlots();renderNeutralSlots();renderPalette();renderContrast();renderExport();
+  document.getElementById('hexInput').value=colors.primary;
+  document.getElementById('hexSwatch').style.backgroundColor=colors.primary;
+  updateModeBadges();
+}
+
+// ================================================================
+// Draggable panel
+// ================================================================
+(function() {
+  const panel = document.getElementById('csPanel');
+  const handle = document.getElementById('csDragHandle');
+  let isDragging = false, offsetX = 0, offsetY = 0;
+
+  handle.addEventListener('mousedown', function(e) {
+    if (e.target.closest('.cs-close')) return;
+    isDragging = true;
+    const rect = panel.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    handle.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    let newX = e.clientX - offsetX;
+    let newY = e.clientY - offsetY;
+    // Clamp to viewport
+    newX = Math.max(0, Math.min(newX, window.innerWidth - 340));
+    newY = Math.max(0, Math.min(newY, window.innerHeight - 80));
+    panel.style.left = newX + 'px';
+    panel.style.top = newY + 'px';
+    panel.style.right = 'auto';
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (isDragging) {
+      isDragging = false;
+      handle.style.cursor = 'grab';
+    }
+  });
+})();
+
+// Init
+initNeutrals();
+regenerate();
+</script>
+</body>
+</html>
