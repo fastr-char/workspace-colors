@@ -202,6 +202,31 @@ body.light-mode .cc-fail { background:#FEE2E2;color:#991B1B; }
 .auto-btn { width:100%;padding:4px;border:1px solid var(--border);background:var(--widget);border-radius:4px;font-size:8px;font-weight:600;cursor:pointer;color:var(--text2);transition:all 0.15s;font-family:inherit;margin-top:3px; }
 .auto-btn:hover { border-color:var(--accent);color:var(--accent); }
 
+/* Share + Download buttons */
+.share-btn-row { display:flex;gap:3px;margin-top:4px; }
+.share-btn { flex:1;padding:5px;border:1px solid var(--border);background:var(--widget);border-radius:4px;font-size:9px;font-weight:600;cursor:pointer;color:var(--text);transition:all 0.15s;font-family:inherit;text-align:center; }
+.share-btn:hover { background:var(--accent);color:var(--btn-text);border-color:var(--accent); }
+.share-btn svg { vertical-align:-2px;margin-right:3px; }
+
+/* Version History */
+.version-list { max-height:140px;overflow-y:auto;margin-top:4px; }
+.version-item { display:flex;align-items:center;gap:4px;padding:3px 4px;border-radius:4px;margin-bottom:1px;transition:background 0.1s;cursor:pointer; }
+.version-item:hover { background:var(--hover); }
+.version-item.active { background:var(--accentdim); }
+.version-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.version-name { flex:1;font-size:9px;font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.version-name-input { flex:1;font-size:9px;font-weight:600;color:var(--text);background:var(--widget);border:1px solid var(--accent);border-radius:3px;padding:1px 4px;outline:none;font-family:inherit;min-width:0; }
+.version-meta { font-size:7px;color:var(--sub);white-space:nowrap; }
+.version-actions { display:flex;gap:1px; }
+.version-btn { width:16px;height:16px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:9px;border-radius:3px;transition:all 0.1s; }
+.version-btn:hover { color:var(--accent);background:var(--hover); }
+.version-btn.delete:hover { color:#FF4444;background:rgba(255,68,68,0.1); }
+.new-version-btn { width:100%;padding:4px;border:1px dashed var(--border);background:transparent;border-radius:4px;font-size:8px;font-weight:600;cursor:pointer;color:var(--sub);transition:all 0.15s;font-family:inherit;margin-top:3px; }
+.new-version-btn:hover { border-color:var(--accent);color:var(--accent); }
+
+/* Download card canvas (hidden) */
+#downloadCanvas { display:none; }
+
 /* Palette Footer */
 .palette-footer { padding:8px 16px;border-top:1px solid var(--border);display:flex;background:var(--widget);flex-shrink:0;position:fixed;bottom:0;left:0;right:0;z-index:90; }
 .pf-item { display:flex;align-items:center;gap:6px;flex:1; }
@@ -471,9 +496,15 @@ body.light-mode { background:#E8EDF5; }
       <div class="cp-label">Palette Tint</div>
       <div class="tint-row">
         <button class="tint-btn active" onclick="setTint('tinted',this)">Tinted</button>
+        <button class="tint-btn" onclick="setTint('soft',this)">Soft</button>
+        <button class="tint-btn" onclick="setTint('vivid',this)">Vivid</button>
         <button class="tint-btn" onclick="setTint('neutral',this)">Neutral</button>
+      </div>
+      <div class="tint-row">
+        <button class="tint-btn" onclick="setTint('fastr',this)">Fastr</button>
         <button class="tint-btn" onclick="setTint('warm',this)">Warm</button>
         <button class="tint-btn" onclick="setTint('cool',this)">Cool</button>
+        <button class="tint-btn" onclick="setTint('slate',this)">Slate</button>
       </div>
 
       <!-- Strip -->
@@ -491,7 +522,24 @@ body.light-mode { background:#E8EDF5; }
       <div class="cp-label">Contrast</div>
       <div class="contrast-row" id="contrastChips"></div>
 
+      <!-- Version History -->
+      <div class="cp-divider"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="cp-label" style="margin:0">Saved Versions</div>
+        <button class="auto-btn" style="width:auto;margin:0;padding:2px 6px;font-size:7px;" onclick="saveNewVersion()">+ Save Current</button>
+      </div>
+      <div class="version-list" id="versionList"></div>
+
+      <!-- Share + Download -->
+      <div class="cp-divider"></div>
+      <div class="cp-label">Share &amp; Export</div>
+      <div class="share-btn-row">
+        <button class="share-btn" onclick="shareURL()"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 6l4-3M5 8l4 3"/><circle cx="3" cy="7" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="11" cy="11" r="2"/></svg>Share Link</button>
+        <button class="share-btn" onclick="downloadCard()"><svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2v8M4 7l3 3 3-3M2 12h10"/></svg>Download</button>
+      </div>
+
       <!-- Export -->
+      <div class="cp-divider"></div>
       <div class="cp-label">CSS Export</div>
       <div class="export-block" id="exportBlock"></div>
       <button class="copy-btn" onclick="copyCSS()">Copy to Clipboard</button>
@@ -501,6 +549,7 @@ body.light-mode { background:#E8EDF5; }
 
 <!-- Footer -->
 <div class="palette-footer" id="paletteFooter"></div>
+<canvas id="downloadCanvas"></canvas>
 
 <script>
 // ================================================================
@@ -555,7 +604,16 @@ let C={};
 function generateFullPalette() {
   const h=hue, s=sat, l=light;
   let tintH=h, tintS=0;
-  switch(tint){case'tinted':tintS=12;break;case'neutral':tintS=0;tintH=0;break;case'warm':tintS=10;tintH=30;break;case'cool':tintS=10;tintH=220;break;}
+  switch(tint){
+    case'tinted':tintS=12;break;
+    case'neutral':tintS=0;tintH=0;break;
+    case'warm':tintS=10;tintH=30;break;
+    case'cool':tintS=10;tintH=220;break;
+    case'fastr':tintS=0;tintH=0;break; // Pure white/grey like Fastr workspace
+    case'soft':tintS=6;break; // Subtle tint
+    case'vivid':tintS=20;break; // Strong tint
+    case'slate':tintS=8;tintH=215;break; // Blue-grey slate
+  }
 
   if(isDark){
     if(!colorLocked.bg) C.bg=hslToHex(tintH,tintS,9);
@@ -565,14 +623,23 @@ function generateFullPalette() {
     if(!colorLocked.sub) C.sub=hslToHex(tintH,Math.max(tintS-2,0),47);
     if(!colorLocked.text2) C.text2=hslToHex(tintH,Math.max(tintS-4,0),72);
     if(!colorLocked.text) C.text=hslToHex(tintH,Math.max(tintS-6,0),94);
+  } else if(tint==='fastr'){
+    // Exact Fastr workspace light mode: pure whites and greys
+    if(!colorLocked.bg) C.bg='#FFFFFF';
+    if(!colorLocked.panel) C.panel='#FFFFFF';
+    if(!colorLocked.widget) C.widget='#EEF0F2';
+    if(!colorLocked.border) C.border='#E8EAEE';
+    if(!colorLocked.sub) C.sub='#8F9DA3';
+    if(!colorLocked.text2) C.text2='#495E74';
+    if(!colorLocked.text) C.text='#18181A';
   } else {
-    if(!colorLocked.bg) C.bg=hslToHex(tintH,Math.min(tintS+20,40),96);
-    if(!colorLocked.panel) C.panel=hslToHex(tintH,Math.min(tintS+18,38),93);
-    if(!colorLocked.widget) C.widget=hslToHex(tintH,Math.min(tintS+15,35),88);
-    if(!colorLocked.border) C.border=hslToHex(tintH,Math.min(tintS+12,30),80);
-    if(!colorLocked.sub) C.sub=hslToHex(tintH,Math.min(tintS+5,22),58);
-    if(!colorLocked.text2) C.text2=hslToHex(tintH,Math.min(tintS+5,20),40);
-    if(!colorLocked.text) C.text=hslToHex(tintH,Math.min(tintS+8,25),14);
+    if(!colorLocked.bg) C.bg=hslToHex(tintH,Math.min(tintS+4,15),99);
+    if(!colorLocked.panel) C.panel=hslToHex(tintH,Math.min(tintS+4,14),97);
+    if(!colorLocked.widget) C.widget=hslToHex(tintH,Math.min(tintS+6,18),94);
+    if(!colorLocked.border) C.border=hslToHex(tintH,Math.min(tintS+6,16),89);
+    if(!colorLocked.sub) C.sub=hslToHex(tintH,Math.min(tintS+4,16),58);
+    if(!colorLocked.text2) C.text2=hslToHex(tintH,Math.min(tintS+4,14),40);
+    if(!colorLocked.text) C.text=hslToHex(tintH,Math.min(tintS+4,12),14);
   }
   if(!colorLocked.accent) C.accent=hslToHex(h,s,isDark?l:Math.max(l-10,30));
   if(!colorLocked.accentdim){
@@ -589,7 +656,7 @@ function applyCSS() {
   const r=document.documentElement;
   for(const s of slots) r.style.setProperty('--'+s.key, C[s.key]);
   r.style.setProperty('--hover', isDark?hslToHex(hue,8,18):hslToHex(hue,15,85));
-  document.body.style.background=isDark?hslToHex(hue,6,5):C.panel;
+  document.body.style.background=isDark?hslToHex(hue,6,5):(tint==='fastr'?'#BFBFBF':C.bg);
   document.body.classList.toggle('light-mode',!isDark);
 }
 
@@ -629,7 +696,7 @@ function renderColorSlots() {
     const c=C[s.key],lk=colorLocked[s.key],isT=activeTarget===s.key;
     return`<div class="color-slot">
       <div class="color-swatch${lk?' locked':''}" style="background:${c}" onclick="pickColor('${s.key}')"></div>
-      <input type="color" class="color-input" id="cpick-${s.key}" value="${c}" oninput="onColorPick('${s.key}',this.value)">
+      <input type="color" class="color-input" id="cpick-${s.key}" value="${c}" oninput="onColorPickLive('${s.key}',this.value)" onchange="onColorPickDone('${s.key}',this.value)">
       <div class="color-info" onclick="pickColor('${s.key}')" style="cursor:pointer">
         <div class="color-name">${s.name}</div>
         <div class="color-hex">${c}</div>
@@ -648,7 +715,16 @@ function renderColorSlots() {
   }).join('');
 }
 function pickColor(key){document.getElementById('cpick-'+key)?.click();}
-function onColorPick(key,val){C[key]=val.toUpperCase();colorLocked[key]=true;applyCSS();renderColorSlots();renderStrip();renderFooter();renderContrast();renderExport();}
+// Live: update CSS only while picker is open (no DOM rebuild = picker stays open)
+function onColorPickLive(key,val){C[key]=val.toUpperCase();colorLocked[key]=true;applyCSS();
+  // Update just this slot's swatch and hex inline without rebuilding DOM
+  const swatch=document.getElementById('cpick-'+key)?.parentElement?.querySelector('.color-swatch');
+  if(swatch)swatch.style.background=val;
+  const hexEl=document.getElementById('cpick-'+key)?.parentElement?.querySelector('.color-hex');
+  if(hexEl)hexEl.textContent=val.toUpperCase();
+}
+// Done: full rebuild when picker closes
+function onColorPickDone(key,val){C[key]=val.toUpperCase();colorLocked[key]=true;applyCSS();renderColorSlots();renderStrip();renderFooter();renderContrast();renderExport();}
 function toggleLock(key){colorLocked[key]=!colorLocked[key];renderColorSlots();}
 function autoNeutrals(){for(const k of neutralKeys)colorLocked[k]=false;fullUpdate();}
 
@@ -808,9 +884,228 @@ function resetAll(){
 }
 
 // ================================================================
+// Share via URL
+// ================================================================
+function encodeState(){
+  const params=new URLSearchParams();
+  params.set('mode',isDark?'dark':'light');
+  params.set('tint',tint);
+  params.set('scheme',scheme);
+  params.set('hue',Math.round(hue));
+  params.set('sat',Math.round(sat));
+  params.set('light',Math.round(light));
+  // Encode all colors compactly (strip #)
+  const colors=slots.map(s=>C[s.key].replace('#','')).join(',');
+  params.set('c',colors);
+  // Encode which colors are locked
+  const locked=slots.filter(s=>colorLocked[s.key]).map(s=>s.key).join(',');
+  if(locked)params.set('locked',locked);
+  return params.toString();
+}
+function decodeState(search){
+  const p=new URLSearchParams(search);
+  if(!p.has('c'))return false;
+  // Mode
+  isDark=p.get('mode')!=='light';
+  document.getElementById('btnDark').classList.toggle('active',isDark);
+  document.getElementById('btnLight').classList.toggle('active',!isDark);
+  // Tint
+  tint=p.get('tint')||'tinted';
+  document.querySelectorAll('.tint-btn').forEach(b=>{b.classList.toggle('active',b.textContent.toLowerCase()===tint);});
+  // Scheme
+  scheme=p.get('scheme')||'complementary';
+  document.querySelectorAll('.scheme-btn').forEach(b=>{b.classList.toggle('active',b.textContent.toLowerCase().startsWith(scheme.substr(0,4)));});
+  // HSL
+  hue=+(p.get('hue')||262);sat=+(p.get('sat')||65);light=+(p.get('light')||55);
+  document.getElementById('satSlider').value=sat;document.getElementById('lightSlider').value=light;
+  // Colors
+  const colors=p.get('c').split(',');
+  slots.forEach((s,i)=>{if(colors[i])C[s.key]='#'+colors[i].toUpperCase();});
+  // Locked
+  colorLocked={};
+  const locked=(p.get('locked')||'').split(',').filter(Boolean);
+  locked.forEach(k=>colorLocked[k]=true);
+  // If colors came from URL, lock them all so generate doesn't overwrite
+  slots.forEach(s=>{colorLocked[s.key]=true;});
+  return true;
+}
+function shareURL(){
+  const url=window.location.origin+window.location.pathname+'?'+encodeState();
+  navigator.clipboard.writeText(url).then(()=>{
+    const btns=document.querySelectorAll('.share-btn');
+    const btn=btns[0];
+    btn.textContent='Link Copied!';btn.style.background='var(--accent)';btn.style.color='var(--btn-text)';btn.style.borderColor='var(--accent)';
+    setTimeout(()=>{btn.innerHTML='<svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 6l4-3M5 8l4 3"/><circle cx="3" cy="7" r="2"/><circle cx="11" cy="3" r="2"/><circle cx="11" cy="11" r="2"/></svg>Share Link';btn.style.background='';btn.style.color='';btn.style.borderColor='';},1500);
+  });
+}
+
+// ================================================================
+// Version History (localStorage)
+// ================================================================
+let versions=JSON.parse(localStorage.getItem('colorVersions')||'[]');
+let activeVersionId=null;
+
+function saveNewVersion(){
+  const v={
+    id:Date.now().toString(36)+Math.random().toString(36).substr(2,4),
+    name:(isDark?'Night':'Day')+' — '+tint.charAt(0).toUpperCase()+tint.slice(1),
+    date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}),
+    mode:isDark?'dark':'light',
+    tint:tint, scheme:scheme,
+    hue:Math.round(hue),sat:Math.round(sat),light:Math.round(light),
+    colors:JSON.parse(JSON.stringify(C)),
+    locked:JSON.parse(JSON.stringify(colorLocked)),
+    accent:C.accent
+  };
+  versions.unshift(v);
+  activeVersionId=v.id;
+  persistVersions();
+  renderVersions();
+}
+function loadVersion(id){
+  const v=versions.find(x=>x.id===id);if(!v)return;
+  activeVersionId=id;
+  isDark=v.mode==='dark';
+  document.getElementById('btnDark').classList.toggle('active',isDark);
+  document.getElementById('btnLight').classList.toggle('active',!isDark);
+  tint=v.tint||'tinted';
+  document.querySelectorAll('.tint-btn').forEach(b=>{b.classList.toggle('active',b.textContent.toLowerCase()===tint);});
+  scheme=v.scheme||'complementary';
+  document.querySelectorAll('.scheme-btn').forEach(b=>{b.classList.toggle('active',b.textContent.toLowerCase().startsWith(scheme.substr(0,4)));});
+  hue=v.hue;sat=v.sat;light=v.light;
+  document.getElementById('satSlider').value=sat;document.getElementById('lightSlider').value=light;
+  C=JSON.parse(JSON.stringify(v.colors));
+  colorLocked=JSON.parse(JSON.stringify(v.locked||{}));
+  // Lock all so fullUpdate doesn't overwrite
+  slots.forEach(s=>{colorLocked[s.key]=true;});
+  fullUpdate();
+  renderVersions();
+}
+function renameVersion(id){
+  const item=document.querySelector(`[data-vid="${id}"] .version-name`);
+  if(!item)return;
+  const v=versions.find(x=>x.id===id);if(!v)return;
+  const input=document.createElement('input');
+  input.className='version-name-input';input.value=v.name;
+  item.replaceWith(input);input.focus();input.select();
+  function finish(){v.name=input.value.trim()||v.name;persistVersions();renderVersions();}
+  input.addEventListener('blur',finish);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')input.blur();if(e.key==='Escape'){input.value=v.name;input.blur();}});
+}
+function deleteVersion(id){
+  versions=versions.filter(x=>x.id!==id);
+  if(activeVersionId===id)activeVersionId=null;
+  persistVersions();renderVersions();
+}
+function persistVersions(){localStorage.setItem('colorVersions',JSON.stringify(versions));}
+function renderVersions(){
+  const el=document.getElementById('versionList');
+  if(!versions.length){el.innerHTML='<div style="font-size:8px;color:var(--sub);padding:6px;text-align:center;">No saved versions yet</div>';return;}
+  el.innerHTML=versions.map(v=>`
+    <div class="version-item${v.id===activeVersionId?' active':''}" data-vid="${v.id}" onclick="loadVersion('${v.id}')">
+      <div class="version-dot" style="background:${v.accent||v.colors?.accent||'var(--accent)'}"></div>
+      <div class="version-name">${v.name}</div>
+      <div class="version-meta">${v.date}</div>
+      <div class="version-actions" onclick="event.stopPropagation()">
+        <button class="version-btn" onclick="renameVersion('${v.id}')" title="Rename">&#9998;</button>
+        <button class="version-btn delete" onclick="deleteVersion('${v.id}')" title="Delete">&times;</button>
+      </div>
+    </div>`).join('');
+}
+
+// ================================================================
+// Download Color Card (PNG)
+// ================================================================
+function downloadCard(){
+  const canvas=document.getElementById('downloadCanvas');
+  const ctx=canvas.getContext('2d');
+  const w=800,h=420;canvas.width=w;canvas.height=h;
+  const mode=isDark?'Night':'Day';
+
+  // Background
+  ctx.fillStyle=C.bg;ctx.fillRect(0,0,w,h);
+
+  // Header bar
+  ctx.fillStyle=C.panel;ctx.fillRect(0,0,w,56);
+  ctx.fillStyle=C.border;ctx.fillRect(0,56,w,1);
+
+  // Logo circle
+  ctx.fillStyle=C.accent;
+  ctx.beginPath();ctx.arc(28,28,14,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=C['btn-text'];ctx.font='bold 11px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('F',28,28);
+
+  // Title
+  ctx.fillStyle=C.text;ctx.font='bold 14px Inter, sans-serif';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText('Fastr Color Scheme — '+mode+' Mode',52,22);
+  ctx.fillStyle=C.sub;ctx.font='11px Inter, sans-serif';
+  ctx.fillText(tint.charAt(0).toUpperCase()+tint.slice(1)+' tint  •  '+scheme,52,40);
+
+  // Color swatches (main row)
+  const swatchY=76,swatchH=140,gap=10;
+  const swatchW=(w-40-(slots.length-1)*gap)/slots.length;
+  slots.forEach((s,i)=>{
+    const x=20+i*(swatchW+gap);
+    // Swatch
+    ctx.fillStyle=C[s.key];
+    roundRect(ctx,x,swatchY,swatchW,swatchH,8);ctx.fill();
+    // Border for light swatches
+    const lum=hexToHSL(C[s.key]).l;
+    if(lum>85){ctx.strokeStyle='#DDD';ctx.lineWidth=1;roundRect(ctx,x,swatchY,swatchW,swatchH,8);ctx.stroke();}
+    // Name below
+    ctx.fillStyle=C.text;ctx.font='bold 10px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText(s.name,x+swatchW/2,swatchY+swatchH+8);
+    // Hex below name
+    ctx.fillStyle=C.sub;ctx.font='10px SF Mono, Monaco, monospace';
+    ctx.fillText(C[s.key],x+swatchW/2,swatchY+swatchH+22);
+  });
+
+  // CSS Variables section
+  const cssY=swatchY+swatchH+48;
+  ctx.fillStyle=C.panel;roundRect(ctx,20,cssY,w-40,h-cssY-20,8);ctx.fill();
+  ctx.fillStyle=C.border;ctx.lineWidth=1;roundRect(ctx,20,cssY,w-40,h-cssY-20,8);ctx.stroke();
+  ctx.fillStyle=C.text;ctx.font='bold 10px Inter, sans-serif';ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('CSS Variables',36,cssY+12);
+  ctx.font='10px SF Mono, Monaco, monospace';
+  const cols=2,perCol=Math.ceil(slots.length/cols);
+  slots.forEach((s,i)=>{
+    const col=Math.floor(i/perCol),row=i%perCol;
+    const cx=36+col*370,cy=cssY+30+row*18;
+    ctx.fillStyle=C.accent;ctx.fillText('--'+s.key+':',cx,cy);
+    ctx.fillStyle=C.text;ctx.fillText(C[s.key]+';',cx+90,cy);
+    // Tiny swatch
+    ctx.fillStyle=C[s.key];ctx.fillRect(cx-14,cy+1,10,10);
+  });
+
+  // Watermark
+  ctx.fillStyle=C.sub;ctx.font='9px Inter, sans-serif';ctx.textAlign='right';ctx.textBaseline='bottom';
+  ctx.fillText('Generated with Fastr Color Scheme Tool',w-24,h-8);
+
+  // Download
+  const link=document.createElement('a');
+  link.download='fastr-color-scheme-'+mode.toLowerCase()+'.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+// ================================================================
 // Init
 // ================================================================
-C={};fullUpdate();
+C={};
+// Check for shared URL params
+if(window.location.search && decodeState(window.location.search.substr(1))){
+  // Loaded from shared URL — update UI
+  fullUpdate();renderVersions();
+  // Clean URL without reload
+  history.replaceState(null,'',window.location.pathname);
+} else {
+  fullUpdate();renderVersions();
+}
 </script>
 </body>
 </html>
